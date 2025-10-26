@@ -27,12 +27,7 @@ jobs:
         role-to-assume: arn:aws:iam::307202557929:role/github-action-cicd-role
         aws-region: ${{ env.AWS_REGION }}
 
-    - name: Install AWS CLI
-      run: |
-        curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
-        unzip awscliv2.zip
-        sudo ./aws/install
-
-    - name: List S3 buckets
-      run: |
-        aws s3 ls
+    - name: AWS CLI v2
+      uses: imehedi/actions-awscli-v2@latest
+      with:
+        args: s3 ls
