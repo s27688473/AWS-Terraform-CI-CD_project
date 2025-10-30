@@ -1,0 +1,1 @@
+mysql -h database-2.c9sq8kemsmra.ap-northeast-1.rds.amazonaws.com -u admin -p 

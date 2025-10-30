@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- 使用基本 CSS 樣式 -->
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin: 0;
+            padding: 0;
+            background-color: #f5f5f5;
+        }
+        h1 {
+            font-size: 48px;
+            margin-top: 50px;
+        }
+        .container {
+            display: flex;
+            justify-content: center;
+            gap: 50px;
+            margin-top: 50px;
+        }
+        .section {
+            background-color: #fff;
+            padding: 20px 40px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        .section h2 {
+            margin-bottom: 20px;
+        }
+        input[type="text"] {
+            display: block;
+            width: 200px;
+            padding: 8px;
+            margin: 10px auto;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+        }
+        button {
+            padding: 8px 20px;
+            border: none;
+            border-radius: 5px;
+            background-color: #007bff;
+            color: white;
+            cursor: pointer;
+            margin-top: 10px;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        /* 狀態和顯示區塊樣式 */
+        #status-message {
+            margin: 20px auto;
+            padding: 10px;
+            width: 80%;
+            max-width: 600px;
+            border-radius: 5px;
+            font-weight: bold;
+            opacity: 0;
+            transition: opacity 0.3s, background-color 0.3s;
+        }
+        #status-message.success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        #status-message.error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        #status-message.info {
+            background-color: #cce5ff;
+            color: #004085;
+            border: 1px solid #b8daff;
+        }
+        #nickname-display {
+            margin-top: 15px;
+            padding: 10px;
+            background-color: #f0f0f0;
+            border-radius: 5px;
+            font-weight: bold;
+            color: #333;
+            min-height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <!-- 狀態訊息顯示區 (用於取代 alert()) -->
+    <div id="status-message">
+        &nbsp;
+    </div>
+
+    <!-- 容器 -->
+    <div class="container">
+        
+        <!-- 註冊區塊 -->
+        <div class="section">
+            <h2>註冊 (Register)</h2>
+            <input type="text" placeholder="姓名 (Name)" id="register-name">
+            <input type="text" placeholder="暱稱 (Nickname)" id="register-nickname">
+            <!-- 重新加入 JavaScript 註冊事件 -->
+            <button onclick="register()">
+                提交
+            </button>
+        </div>
+
+        <!-- 查詢區塊 -->
+        <div class="section">
+            <h2>查詢 (Search)</h2>
+            <input type="text" placeholder="姓名 (Name)" id="search-name">
+            <!-- 重新加入 JavaScript 查詢事件 -->
+            <button onclick="search()" style="background-color: #28a745;">
+                查詢
+            </button>
+            <div id="nickname-display">
+                在此顯示查詢結果
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // API 基礎路徑：由於使用 Apache 反向代理，API 路徑與頁面路徑相同
+        const API_BASE_URL = window.location.origin;
+
+        const statusElement = document.getElementById('status-message');
+
+        /**
+         * 顯示狀態訊息，取代瀏覽器內建的 alert()。
+         * @param {string} message - 要顯示的訊息內容。
+         * @param {'success'|'error'|'info'} type - 訊息類型。
+         */
+        function showStatus(message, type = 'info') {
+            statusElement.textContent = message;
+            // 重設樣式並確保顯示
+            statusElement.className = type; // 設置類型 className
+            statusElement.style.opacity = 1;
+
+            // 3秒後隱藏
+            setTimeout(() => {
+                statusElement.style.opacity = 0;
+            }, 3000);
+        }
+
+        /**
+         * 處理使用者註冊 (POST 請求到 /register)。
+         */
+        async function register() {
+            const name = document.getElementById('register-name').value.trim();
+            const nickname = document.getElementById('register-nickname').value.trim();
+
+            if (!name || !nickname) {
+                showStatus("姓名和暱稱欄位不能為空。", 'error');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/register`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ name, nickname })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) { // HTTP 200 OK
+                    showStatus(data.message, 'success');
+                    // 清空欄位
+                    document.getElementById('register-name').value = '';
+                    document.getElementById('register-nickname').value = '';
+                } else { // 錯誤處理
+                    showStatus(`註冊失敗: ${data.message || '連線錯誤'}`, 'error');
+                }
+            } catch (error) {
+                // 網路或連線錯誤 (例如 Gunicorn 未運行)
+                console.error('註冊 API 錯誤:', error);
+                showStatus('連線後端 API 失敗，請檢查 Gunicorn 服務。', 'error');
+            }
+        }
+
+        /**
+         * 處理使用者查詢 (GET 請求到 /search)。
+         */
+        async function search() {
+            const name = document.getElementById('search-name').value.trim();
+            const displayElement = document.getElementById('nickname-display');
+            displayElement.textContent = "正在查詢...";
+            displayElement.style.color = '#333'; // 重設顏色
+
+            if (!name) {
+                showStatus("請輸入要查詢的姓名。", 'error');
+                displayElement.textContent = "在此顯示查詢結果";
+                return;
+            }
+
+            try {
+                // 發送 GET 請求，姓名作為 URL 查詢參數
+                const response = await fetch(`${API_BASE_URL}/search?name=${encodeURIComponent(name)}`, {
+                    method: 'GET'
+                });
+
+                const data = await response.json();
+
+                if (response.ok) { // HTTP 200 OK
+                    displayElement.textContent = `姓名: ${name} 暱稱: ${data.nickname}`;
+                    displayElement.style.color = '#28a745'; // 成功顏色
+                    showStatus(`成功查詢到使用者 ${name} 的暱稱。`, 'success');
+                } else if (response.status === 404) { // HTTP 404 Not Found
+                    displayElement.textContent = `找不到名為 "${name}" 的使用者。`;
+                    displayElement.style.color = '#dc3545'; // 錯誤顏色
+                    showStatus(data.message, 'info');
+                } else { // 其他 API 錯誤
+                    displayElement.textContent = `查詢失敗: ${data.message || '未知錯誤'}`;
+                    displayElement.style.color = '#dc3545'; // 錯誤顏色
+                    showStatus(`查詢 API 錯誤: ${data.message || '未知錯誤'}`, 'error');
+                }
+            } catch (error) {
+                // 網路或連線錯誤 (例如 Gunicorn 未運行)
+                console.error('查詢 API 錯誤:', error);
+                displayElement.textContent = "連線失敗。";
+                displayElement.style.color = '#dc3545'; // 錯誤顏色
+                showStatus('連線後端 API 失敗，請檢查服務。', 'error');
+            }
+        }
+    </script>
+
+</body>
+</html>
