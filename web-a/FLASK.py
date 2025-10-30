@@ -2,14 +2,19 @@ import os
 import mysql.connector
 from flask import Flask,request,jsonify,render_template
 import time
+from dotenv import load_dotenv
 
 # --- 數據庫配置 ---
 # 應用程式將從環境變數中讀取資料庫憑證。
-DB_HOST = os.environ.get("DB_HOST",)
-DB_USER = os.environ.get("DB_USER",)
-DB_PASSWORD = os.environ.get("DB_PASSWORD",)
-DB_DATABASE = os.environ.get("DB_DATABASE",)
+
+load_dotenv()
+DB_HOST = os.getenv("DB_HOST")
+DB_USER = os.getenv("DB_USER")
+DB_PASSWORD = os.getenv("DB_PASSWORD")
+DB_DATABASE = os.getenv("DB_DATABASE")
 app = Flask(__name__)
+print(DB_HOST,DB_USER,DB_PASSWORD,DB_DATABASE)
+
 
 def get_db_connection(max_retries=30, delay_seconds=5):
     """
@@ -37,29 +42,28 @@ def get_db_connection(max_retries=30, delay_seconds=5):
                 return None
     return None
 
-# --- 初始化數據庫 (首次運行時創建表格) ---
-def initialize_db():
-    """創建 users 表，並重試連線直到成功。"""
-    conn = get_db_connection(max_retries=10, delay_seconds=6) # 總計等待最多約 60 秒
-    if conn:
-        try:
-            cursor = conn.cursor()
-            # 創建 users 表，如果它不存在
-            cursor.execute("""
-                CREATE TABLE IF NOT EXISTS users (
-                    name VARCHAR(255) PRIMARY KEY,
-                    nickname VARCHAR(255) NOT NULL
-                )
-            """)
-            conn.commit()
-            print("數據庫初始化成功：'users' 表格已確保存在。")
-            return True
-        except mysql.connector.Error as err:
-            print(f"數據庫初始化錯誤: {err}")
-            return False
-        finally:
-            conn.close()
-    return False
+def create_user_table():
+    conn = get_db_connection()
+    if not conn:
+        print("無法連接資料庫，無法創建表")
+        return
+    try:
+        cursor = conn.cursor()
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS users (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                name VARCHAR(255) NOT NULL,
+                nickname VARCHAR(255) NOT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+        conn.commit()
+        print("users 表已創建或已存在")
+    except mysql.connector.Error as err:
+        print(f"創建表失敗: {err}")
+    finally:
+        cursor.close()
+        conn.close()
 
 
 @app.route("/")
@@ -128,4 +132,5 @@ def search_user():
         conn.close()
 
 if __name__ == '__main__':
+    create_user_table()
     app.run(host='0.0.0.0', port=5000)
