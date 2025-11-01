@@ -1,1 +1,8 @@
 mysql -h database-2.c9sq8kemsmra.ap-northeast-1.rds.amazonaws.com -u admin -p 
+sudo journalctl -u flaskapp.service -n 50
+sudo systemctl status flaskapp.service
+sudo cat /var/log/user-data.log
+
+
+cd "C:\Users\Administrator\Desktop\±M®×FLASK"
+tar -czf web-a.tar.gz web-a

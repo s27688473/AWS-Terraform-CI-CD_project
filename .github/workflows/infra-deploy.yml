@@ -32,14 +32,20 @@ jobs:
         role-to-assume: arn:aws:iam::307202557929:role/github-action-cicd-role
         aws-region: ${{ env.AWS_REGION }}
 
-    - name: install terraform
+    - name: Setup Terraform
+      uses: hashicorp/setup-terraform@v2
+      with:
+        terraform_version: 1.13.4
+
+    - name: init
+      run: terraform init
 
     - name: plan
-      on: {{if input.mode == "plan"}}
+      if: ${{ github.event.inputs.mode == 'plan' }}
       run: |
         terraform plan
 
     - name: apply
-      on: {{if input.mode == "apply"}}
+      if: ${{ github.event.inputs.mode == 'apply' }}
       run: |
-        terraform apply -y
+        terraform apply -auto-approve
