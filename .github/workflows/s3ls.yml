@@ -8,8 +8,8 @@ env:
   
 permissions:
   contents: read
-  id-token: write   # <-- required for OIDC
-  actions: read     # optional
+  id-token: write   
+  actions: read     
 
 jobs:
   deploy:
@@ -24,7 +24,7 @@ jobs:
     - name: Configure AWS credentials using OIDC
       uses: aws-actions/configure-aws-credentials@v3
       with:
-        role-to-assume: arn:aws:iam::307202557929:role/github-action-cicd-role
+        role-to-assume: arn:aws:iam::307202557929:instance-profile/main
         aws-region: ${{ env.AWS_REGION }}
 
     - name: AWS CLI v2

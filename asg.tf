@@ -2,14 +2,45 @@ resource "aws_autoscaling_policy" "target_cpu" {
   name                   = "cpu"
   autoscaling_group_name = aws_autoscaling_group.main.name
   policy_type            = "TargetTrackingScaling"
-  # 配置目標追蹤
+  # 目標 CPU 使用率 (百分比)
   target_tracking_configuration {
-    # 目標 CPU 使用率 (百分比)
     target_value = 80.0
-    
     # 使用 AWS 預定義的指標 (例如平均 CPU 利用率)
     predefined_metric_specification {
       predefined_metric_type = "ASGAverageCPUUtilization"
+    }
+  }
+}
+
+resource "aws_autoscaling_policy" "target_network_in" {
+  name                   = "network-in"
+  autoscaling_group_name = aws_autoscaling_group.main.name
+  policy_type            = "TargetTrackingScaling"
+  target_tracking_configuration {
+    target_value = 50000000  # 50 MB/s
+
+    customized_metric_specification {
+      metric_name = "NetworkIn"
+      namespace   = "AWS/EC2"
+      statistic   = "Average"
+      unit        = "Bytes"
+    }
+  }
+}
+
+resource "aws_autoscaling_policy" "target_network_out" {
+  name                   = "network-out"
+  autoscaling_group_name = aws_autoscaling_group.main.name
+  policy_type            = "TargetTrackingScaling"
+
+  target_tracking_configuration {
+    target_value = 50000000  # 50 MB/s，可依需求調整
+
+    customized_metric_specification {
+      metric_name = "NetworkOut"
+      namespace   = "AWS/EC2"
+      statistic   = "Average"
+      unit        = "Bytes"
     }
   }
 }

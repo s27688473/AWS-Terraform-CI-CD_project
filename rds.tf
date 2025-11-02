@@ -30,7 +30,7 @@ resource "aws_db_subnet_group" "main" {
 }
 
 resource "aws_db_instance" "main_db" {
-    identifier = "app-db-instance"
+    identifier = "maindb"
     allocated_storage = 20
     engine = "mysql"
     engine_version = "8.0.42"
@@ -45,7 +45,7 @@ resource "aws_db_instance" "main_db" {
     availability_zone = "ap-northeast-1a"
 
     tags = {
-      Name = "main-db"
+      Name = "MainDB"
     }
 }
 
