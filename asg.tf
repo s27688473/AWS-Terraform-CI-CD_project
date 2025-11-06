@@ -4,7 +4,7 @@ resource "aws_autoscaling_policy" "target_cpu" {
   policy_type            = "TargetTrackingScaling"
   # 目標 CPU 使用率 (百分比)
   target_tracking_configuration {
-    target_value = 80.0
+    target_value = 50.0
     # 使用 AWS 預定義的指標 (例如平均 CPU 利用率)
     predefined_metric_specification {
       predefined_metric_type = "ASGAverageCPUUtilization"
